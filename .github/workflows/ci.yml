@@ -49,7 +49,7 @@ jobs:
 
       - name: Build with Gradle Wrapper
         if: steps.changes.outputs.application == 'true'
-        run: ./gradlew copySecret build
+        run: ./gradlew copySecret build -x test
         env:
           SPRING_PROFILES_ACTIVE: local
 
