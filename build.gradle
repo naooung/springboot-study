@@ -62,10 +62,10 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-sourceSets {
-    main {
-        resources {
-            srcDir '2025-1-SBConfig'
-        }
-    }
-}
+//sourceSets {
+//    main {
+//        resources {
+//            srcDir '2025-1-SBConfig'
+//        }
+//    }
+//}
