@@ -62,12 +62,17 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-// 1. copySecret이라는 Copy Task를 등록
+// 1. Copy task 정의
 tasks.register('copySecret', Copy) {
-    from '2025-1-SBConfig'             // 서브모듈 이름 또는 경로
-    include '*.yml', '*.properties'    // 필요한 설정 파일들
-    into 'src/main/resources'          // 복사 대상 경로
+    from "/2025-1-SBConfig"  // 절대경로로 보장
+    include '*.yml', '*.properties'
+    into "$buildDir/generated-config"  // 빌드 디렉토리 중간 위치로 복사
 }
 
-// 2. resources 처리 전에 위 Task가 먼저 실행되도록 설정
-processResources.dependsOn('copySecret')
+// 2. resources 처리 전에 복사되도록 명시
+processResources {
+    dependsOn copySecret
+    from("$buildDir/generated-config") {
+        include '*.yml', '*.properties'
+    }
+}
