@@ -64,9 +64,14 @@ tasks.named('test') {
 
 // 1. Copy task 정의
 tasks.register('copySecret', Copy) {
-    from "/2025-1-SBConfig"  // 절대경로로 보장
-    include '*.yml', '*.properties'
-    into "$buildDir/generated-config"  // 빌드 디렉토리 중간 위치로 복사
+    from('2025-1-SBConfig') {
+        include '*.yml', '*.properties'
+    }
+    into 'src/main/resources'
+
+    doLast {
+        println "✅ Copied configuration files to src/main/resources"
+    }
 }
 
 // 2. resources 처리 전에 복사되도록 명시
