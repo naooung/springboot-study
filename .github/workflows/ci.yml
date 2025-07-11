@@ -51,7 +51,7 @@ jobs:
         if: steps.changes.outputs.application == 'true'
         run: ./gradlew copySecret build
         env:
-          SPRING_PROFILES_ACTIVE: dev
+          SPRING_PROFILES_ACTIVE: local
 
   code-style:
     runs-on: ubuntu-latest
