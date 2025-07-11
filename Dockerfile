@@ -1,8 +1,10 @@
-FROM eclipse-temurin:21-jdk-jammy
+FROM eclipse-temurin:21-jdk
 
 WORKDIR /app
-COPY 2025-1-SBConfig/application-local.properties 2025-1-SBConfig/application-local.properties
 
-COPY build/libs/*SNAPSHOT.jar app.jar
+# 빌드된 jar 복사
+COPY build/libs/sbstudy-0.0.1-SNAPSHOT.jar app.jar
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
