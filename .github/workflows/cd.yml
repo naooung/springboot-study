@@ -25,10 +25,10 @@ jobs:
       - name: Grant execute permission for Gradlew
         run: chmod +x gradlew
 
-      - name: Check for application-prod.properties
+      - name: Check for application-local.properties
         run: |
-          if [ ! -f 2025-1-SBConfig/application-prod.properties ]; then
-            echo "❌ 설정 파일 누락: 2025-1-SBConfig/application-prod.properties"
+          if [ ! -f 2025-1-SBConfig/application-local.properties ]; then
+            echo "❌ 설정 파일 누락: 2025-1-SBConfig/application-local.properties"
             exit 1
           fi
 
@@ -57,7 +57,7 @@ jobs:
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}
             sudo docker rm -f sb-study-container || true
             sudo docker run -d --name sb-study-container \
-              -e SPRING_PROFILES_ACTIVE=prod \
+              -e SPRING_PROFILES_ACTIVE=local \
               -p ${{ secrets.SPRINGBOOT_PORT }}:${{ secrets.SPRINGBOOT_PORT }} \
               ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}
             sudo docker image prune -f
