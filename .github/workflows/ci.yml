@@ -20,9 +20,6 @@ jobs:
           token: ${{ secrets.GIT_ACTION_TOKEN }}
           submodules: recursive
 
-      # - name: Update submodule
-      #   run: git submodule update --remote
-
       - name: Filtering changes
         uses: dorny/paths-filter@v2
         id: changes
@@ -47,9 +44,17 @@ jobs:
         if: steps.changes.outputs.application == 'true'
         run: chmod +x gradlew
 
+      - name: Check for application-local.properties
+        if: steps.changes.outputs.application == 'true'
+        run: |
+          if [ ! -f 2025-1-SBConfig/application-local.properties ]; then
+            echo "❌ 설정 파일이 누락되었습니다: 2025-1-SBConfig/application-local.properties"
+            exit 1
+          fi
+
       - name: Build with Gradle Wrapper
         if: steps.changes.outputs.application == 'true'
-        run: ./gradlew copySecret build -x test
+        run: ./gradlew build -x test
         env:
           SPRING_PROFILES_ACTIVE: local
 
