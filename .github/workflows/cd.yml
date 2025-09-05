@@ -1,5 +1,4 @@
-name: CD with Gradle
-
+name: CD
 on:
   push:
     branches:
@@ -8,13 +7,14 @@ on:
 jobs:
   build:
     runs-on: self-hosted
-
+    outputs:
+      profile: ${{ steps.set-profile.outputs.profile }}
     steps:
-      - name: Checkout repository and submodules
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GIT_ACTION_TOKEN }}
-          submodules: recursive
+          submodules: true
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -25,39 +25,57 @@ jobs:
       - name: Grant execute permission for Gradlew
         run: chmod +x gradlew
 
-      - name: Check for application-local.properties
-        run: |
-          if [ ! -f 2025-1-SBConfig/application-local.properties ]; then
-            echo "❌ 설정 파일 누락: 2025-1-SBConfig/application-local.properties"
-            exit 1
-          fi
-
       - name: Build with Gradle
-        run: ./gradlew build -x test
+        run: ./gradlew clean bootjar -Pprofile=${PROFILE}
 
       - name: Docker build & push
-        run: |
-          docker buildx build --platform linux/amd64 \
-            -t ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }} \
-            --push .
+        run: docker buildx build -f ./docker/Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }} --push .
 
   deploy:
     runs-on: self-hosted
     needs: build
-
     steps:
-      - name: Deploy to server via SSH
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy on server
         uses: appleboy/ssh-action@master
+        env:
+          PROFILE: ${{ needs.build.outputs.profile }}
+          ENV_DEV: ${{ secrets.ENV }}
         with:
+          envs: PROFILE,ENV
           host: ${{ secrets.SSH_HOST }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}
-            sudo docker rm -f sb-study-container || true
-            sudo docker run -d --name sb-study-container \
-              -e SPRING_PROFILES_ACTIVE=local \
-              -p ${{ secrets.SPRINGBOOT_PORT }}:${{ secrets.SPRINGBOOT_PORT }} \
-              ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}
-            sudo docker image prune -f
+            cd /home/ec2-user/actions-runner/_work/springboot-study/springboot-study/docker
+            echo "$ENV" > ./.env
+            echo "PROFILE=dev" >> ./.env 
+
+            # 블루/그린 현재 활성 컨테이너 확인
+            if docker ps --filter "name=app-blue" --filter "status=running" | grep app-blue > /dev/null; then
+              ACTIVE_COLOR="blue"
+            elif docker ps --filter "name=app-green" --filter "status=running" | grep app-green > /dev/null; then
+              ACTIVE_COLOR="green"
+            else
+              ACTIVE_COLOR="green"
+            fi
+
+            # 배포할 색상 결정
+            if [ "$ACTIVE_COLOR" = "blue" ]; then
+              COLOR="green"
+              PREV_COLOR="blue"
+            else
+              COLOR="blue"
+              PREV_COLOR="green"
+            fi
+
+            echo "Starting $COLOR deployment"
+            docker compose -f docker-compose.yml -f docker-compose-${COLOR}.yml pull
+            docker compose -f docker-compose.yml -f docker-compose-${COLOR}.yml up -d --build
+
+              echo "Stopping previous $PREV_COLOR app container"
+              docker compose -f docker-compose.yml -f docker-compose-${PREV_COLOR}.yml stop app-${PREV_COLOR} || true
+            fi
