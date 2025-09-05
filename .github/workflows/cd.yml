@@ -76,6 +76,5 @@ jobs:
             docker compose -f docker-compose.yml -f docker-compose-${COLOR}.yml pull
             docker compose -f docker-compose.yml -f docker-compose-${COLOR}.yml up -d --build
 
-              echo "Stopping previous $PREV_COLOR app container"
-              docker compose -f docker-compose.yml -f docker-compose-${PREV_COLOR}.yml stop app-${PREV_COLOR} || true
-            fi
+            echo "Stopping previous $PREV_COLOR app container"
+            docker compose -f docker-compose.yml -f docker-compose-${PREV_COLOR}.yml stop app-${PREV_COLOR} || true
