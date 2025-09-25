@@ -2,7 +2,12 @@ package com.likelion.sbstudy.domain.book.controller;
 
 import com.likelion.sbstudy.domain.book.dto.request.bookRequest;
 import com.likelion.sbstudy.domain.book.dto.response.BookResponse;
+import com.likelion.sbstudy.domain.book.entity.Category;
 import com.likelion.sbstudy.domain.book.service.BookService;
+import com.likelion.sbstudy.global.exception.CustomException;
+import com.likelion.sbstudy.global.page.exception.PageErrorCode;
+import com.likelion.sbstudy.global.page.response.InfiniteResponse;
+import com.likelion.sbstudy.global.page.response.PageResponse;
 import com.likelion.sbstudy.global.response.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -11,6 +16,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +27,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -87,5 +95,43 @@ public class BookController {
 
     BookResponse response = bookService.addBookImages(id, images);
     return ResponseEntity.ok(BaseResponse.success("책 이미지 추가에 성공하였습니다.", response));
+  }
+
+  @Operation(summary = "책 페이지 조회", description = "정렬 기준에 맞춰 책 페이지 정보를 조회합니다.")
+  @GetMapping("/page")
+  public ResponseEntity<BaseResponse<PageResponse<BookResponse>>> getBookPageByCategory(
+      @RequestParam Category category,
+      @RequestParam(defaultValue = "1") Integer pageNum,
+      @RequestParam(defaultValue = "4") Integer pageSize) {
+
+    Pageable pageable = validatePageable(pageNum, pageSize);
+    PageResponse<BookResponse> pageResponse = bookService.getBookPageByCategory(category, pageable);
+
+    return ResponseEntity.ok(BaseResponse.success("페이지 조회에 성공했습니다.", pageResponse));
+  }
+
+  @Operation(summary = "책 인피니티 스크롤 조회", description = "마지막으로 조회한 책 식별자 이후의 책 목록을 조회합니다.")
+  @GetMapping("/infinite")
+  public ResponseEntity<BaseResponse<InfiniteResponse<BookResponse>>> getBooksByCategoryInfinite(
+      @RequestParam Category category,
+      @RequestParam(required = false) Long lastBookId,
+      @RequestParam(defaultValue = "3") Integer size) {
+
+    InfiniteResponse<BookResponse> response =
+        bookService.getBooksByCategoryInfinite(category, lastBookId, size);
+
+    return ResponseEntity.ok(BaseResponse.success("인피니티 스크롤 조회에 성공했습니다.", response));
+  }
+
+  // 검증 로직은 controller에서 실행
+  private Pageable validatePageable(Integer pageNum, Integer pageSize) {
+    if (pageNum < 1) {
+      throw new CustomException(PageErrorCode.PAGE_NOT_FOUND);
+    }
+    if (pageSize < 1) {
+      throw new CustomException(PageErrorCode.PAGE_SIZE_ERROR);
+    }
+
+    return PageRequest.of(pageNum - 1, pageSize);
   }
 }
