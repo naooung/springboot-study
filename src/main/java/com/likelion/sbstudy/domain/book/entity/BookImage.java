@@ -30,7 +30,7 @@ public class BookImage {
   @Column(name = "image_url", nullable = false)
   private String imageUrl;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.LAZY, optional = true)
   @JoinColumn(name = "book_id")
   private Book book;
 }

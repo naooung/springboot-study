@@ -9,7 +9,7 @@ import lombok.Getter;
 @Getter
 @Builder
 @Schema(title = "CreateBookRequest DTO", description = "책 생성을 위한 데이터 전송")
-public class CreateBookRequest {
+public class bookRequest {
 
   @Schema(description = "책 제목", example = "그리고 아무도 없었다")
   private String title;

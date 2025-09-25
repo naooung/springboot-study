@@ -51,9 +51,25 @@ public class Book extends BaseTimeEntity {
   private List<Category> categoryList;
 
   @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<BookImage> bookImages = new ArrayList<>();
+  private List<BookImage> bookImageList = new ArrayList<>();
 
   public void addBookImages(List<BookImage> bookImages) {
-    this.bookImages = bookImages;
+    this.bookImageList = bookImages;
+  }
+
+  public void update(String title,
+                     String author,
+                     String publisher,
+                     Integer price,
+                     String description,
+                     String releaseDate,
+                     List<Category> categoryList) {
+    this.title = title;
+    this.author = author;
+    this.publisher = publisher;
+    this.price = price;
+    this.description = description;
+    this.releaseDate = releaseDate;
+    this.categoryList = categoryList;
   }
 }
